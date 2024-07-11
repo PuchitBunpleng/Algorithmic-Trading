@@ -1,8 +1,7 @@
-from abc import classmethod, abstractmethod
+from abc import abstractmethod
 import pandas as pd
 
 class TradingAgent:
-    @classmethod
     def __init__(self, name):
         self.name = name
         self.position = 0  # 0: No position, 1: Long, -1: Short
@@ -10,13 +9,16 @@ class TradingAgent:
         self.holdings = 0
 
     @abstractmethod
-    def generate_signals(self):
+    def generate_signals(self, data):
         pass
 
-    @classmethod
+    @abstractmethod
+    def train_model(self, data):
+        pass
+
     def trade(self, data):
-        signal = self.generate_signals()
-        price = data['Close'].iloc[-1]
+        signal = self.generate_signals(data)
+        price = data['close'].iloc[-1]
         if signal == 1 and self.position != 1:
             if self.cash > 0:
                 self.holdings = self.cash / price
@@ -32,6 +34,5 @@ class TradingAgent:
         else:
             print(f"{pd.Timestamp.now()}: {self.name} - Hold")
 
-    @classmethod
     def get_portfolio_value(self, current_price):
         return self.cash + (self.holdings * current_price)
