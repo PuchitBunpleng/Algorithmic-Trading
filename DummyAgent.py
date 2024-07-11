@@ -6,9 +6,11 @@ class DummyAgent(TradingAgent):
         super().__init__(name)
 
     def generate_signals(self, data):
+        # Change here
         return np.random.choice([0, 1, 2])
     
     def train_model(self, data):
+        # Change here
         pass
 
     def trade(self, data):

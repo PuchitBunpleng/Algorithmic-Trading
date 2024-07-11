@@ -2,14 +2,17 @@ from abc import abstractmethod
 import pandas as pd
 
 class TradingAgent:
-    def __init__(self, name):
+    def __init__(self, name, model=None):
         self.name = name
         self.position = 0  # 0: No position, 1: Long, -1: Short
         self.cash = 100000  # Starting cash in USD
         self.holdings = 0
+        self.model = model
 
     @abstractmethod
     def generate_signals(self, data):
+        # Return
+        # 0: Hold, 1: Buy, 2: Sell
         pass
 
     @abstractmethod
