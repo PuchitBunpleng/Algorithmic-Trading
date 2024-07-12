@@ -1,6 +1,5 @@
 import requests
 import pandas as pd
-import numpy as np
 import time
 
 from ExampleAgent import ExampleAgent
@@ -54,3 +53,45 @@ print(f"Portfolio Value for 1m Interval: {portfolio_value_1m}")
 print(f"Portfolio Value for 1h Interval: {portfolio_value_1h}")
 print(f"Portfolio Value for 4h Interval: {portfolio_value_4h}")
 print(f"Portfolio Value for 1d Interval: {portfolio_value_1d}")
+
+# Function to update agents in real-time
+def update_data(data, interval):
+    new_data = fetch_historical_data('BTCUSDT', interval, limit=1)
+    if new_data.index[-1] == data.index[-1]:
+        return data
+    return pd.concat([data, new_data])
+
+def update_agents():
+    global df_1m, df_1h, df_4h, df_1d
+    df_1m = update_data(df_1m, '1m')
+    df_1h = update_data(df_1h, '1h')
+    df_4h = update_data(df_4h, '4h')
+    df_1d = update_data(df_1d, '1d')
+
+    df_1m = prepare_data(df_1m)
+    df_1h = prepare_data(df_1h)
+    df_4h = prepare_data(df_4h)
+    df_1d = prepare_data(df_1d)
+
+    agent_1m.trade(df_1m)
+    agent_1h.trade(df_1h)
+    agent_4h.trade(df_4h)
+    agent_1d.trade(df_1d)
+
+    print(f"1m Interval Portfolio Value: {agent_1m.get_portfolio_value(df_1m['close'].iloc[-1])}")
+    print(f"1h Interval Portfolio Value: {agent_1h.get_portfolio_value(df_1h['close'].iloc[-1])}")
+    print(f"4h Interval Portfolio Value: {agent_4h.get_portfolio_value(df_4h['close'].iloc[-1])}")
+    print(f"1d Interval Portfolio Value: {agent_1d.get_portfolio_value(df_1d['close'].iloc[-1])}")
+
+# Reset agents
+agent_1m.reset()
+agent_1h.reset()
+agent_4h.reset()
+agent_1d.reset()
+
+# Start trading in real-time
+print()
+print("*-*-*-*-*-*-*-*-*-*Start trading in real-time*-*-*-*-*-*-*-*-*-*")
+while True:
+    update_agents()
+    time.sleep(60) # Adjust the sleep time according to the interval
