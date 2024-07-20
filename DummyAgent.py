@@ -14,7 +14,8 @@ class DummyAgent(TradingAgent):
         pass
 
     def trade(self, data):
-        super().trade(data)
+        # Change here
+        pass
     
     def get_portfolio_value(self, current_price):
         return super().get_portfolio_value(current_price)

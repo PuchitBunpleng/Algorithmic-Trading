@@ -3,7 +3,7 @@ import numpy as np
 from catboost import Pool, CatBoostRegressor
 
 class ExampleAgent(TradingAgent):
-    def __init__(self, name):
+    def __init__(self, name, treshold=0.01):
         """
         Initializes the ExampleAgent instance with a given name.
         
@@ -12,8 +12,9 @@ class ExampleAgent(TradingAgent):
         """        
         super().__init__(name)
         self.model = CatBoostRegressor()
+        self.treshold = treshold
         self.retrain_period = 500
-        self.window_size = 100
+        self.window_size = 30
 
     def generate_signals(self, data):
         """
@@ -28,9 +29,9 @@ class ExampleAgent(TradingAgent):
         current = data['returns'].iloc[-1]
         features = self.extract_feature(data)
         pred = self.model.predict(np.array(features).reshape(-1, self.window_size))[0]
-        if pred > current:
+        if pred - current > self.treshold:
             return 1
-        elif pred < current:
+        elif pred - current < -self.treshold:
             return 2
         else:
             return 0
@@ -65,6 +66,15 @@ class ExampleAgent(TradingAgent):
         return train_data, train_label
     
     def extract_feature(self, data):
+        """
+        Generates features based on the input data.
+
+        Parameters:
+            data (List): The input data for feature extraction.
+
+        Returns:
+            List: A list of features extracted from the input data.
+        """
         features = []
         for i in range(len(data) - self.window_size):
             features.append(data[i:i+self.window_size])
