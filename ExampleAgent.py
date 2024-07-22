@@ -3,7 +3,7 @@ import numpy as np
 from catboost import Pool, CatBoostRegressor
 
 class ExampleAgent(TradingAgent):
-    def __init__(self, name, treshold=0.01):
+    def __init__(self, name, buy_threshold=0.01, sell_threshold=0.01):
         """
         Initializes the ExampleAgent instance with a given name.
         
@@ -12,9 +12,10 @@ class ExampleAgent(TradingAgent):
         """        
         super().__init__(name)
         self.model = CatBoostRegressor()
-        self.treshold = treshold
+        self.buy_treshold = buy_threshold
+        self.sell_treshold = sell_threshold
         self.retrain_period = 500
-        self.window_size = 30
+        self.window_size = 1
 
     def generate_signals(self, data):
         """
@@ -29,9 +30,9 @@ class ExampleAgent(TradingAgent):
         current = data['returns'].iloc[-1]
         features = self.extract_feature(data)
         pred = self.model.predict(np.array(features).reshape(-1, self.window_size))[0]
-        if pred - current > self.treshold:
+        if pred - current > self.buy_treshold:
             return 1
-        elif pred - current < -self.treshold:
+        elif pred - current < -self.sell_treshold:
             return 2
         else:
             return 0
