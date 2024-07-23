@@ -2,6 +2,8 @@ import requests
 import pandas as pd
 import time
 
+from LstmAgent import LstmAgent
+
 def fetch_historical_data(symbol, interval, limit=1000):
     url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}'
     response = requests.get(url)
@@ -36,20 +38,11 @@ def backtest(agent, data):
         agent.trade(data.loc[:timestamp])
     return agent.get_portfolio_value(row['close'])
 
-# Initialize agents (Change here)
-from CatBoostAgent import CatBoostAgent
-
-# Price
-agent_1m = CatBoostAgent('CatBoost Agent 1m')
-agent_1h = CatBoostAgent('CatBoost Agent 1h')
-agent_4h = CatBoostAgent('CatBoost Agent 4h')
-agent_1d = CatBoostAgent('CatBoost Agent 1d')
-
-# Return
-# agent_1m = CatBoostAgent('CatBoost Agent 1m', buy_threshold=0.001, sell_threshold=0.001)
-# agent_1h = CatBoostAgent('CatBoost Agent 1h', buy_threshold=0.01, sell_threshold=0.02)
-# agent_4h = CatBoostAgent('CatBoost Agent 4h', buy_threshold=0.01, sell_threshold=0.02)
-# agent_1d = CatBoostAgent('CatBoost Agent 1d', buy_threshold=0.05, sell_threshold=0.06)
+# Initialize agents
+agent_1m = LstmAgent('Q-learning Agent 1m')
+agent_1h = LstmAgent('Q-learning Agent 1h')
+agent_4h = LstmAgent('Q-learning Agent 4h')
+agent_1d = LstmAgent('Q-learning Agent 1d')
 
 # Backtest each agent
 portfolio_value_1m = backtest(agent_1m, df_1m)

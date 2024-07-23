@@ -64,6 +64,7 @@ class CatBoostAgent(TradingAgent):
         features = self.extract_feature(data)
         train_label = data.shift(-self.window_size).dropna()
         train_data = np.array(features)
+        
         return train_data, train_label
     
     def extract_feature(self, data):
