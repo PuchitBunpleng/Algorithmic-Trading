@@ -84,6 +84,7 @@ class data_preparation():
         # Remove rows with NaN values
         data.dropna(inplace=True)
 
+        data = data[features_to_normalize]
         # Preserve the timestamp index
         timestamps = data.index
 
@@ -103,9 +104,12 @@ class data_preparation():
 
         # Create a DataFrame with principal components
         pca_df = pd.DataFrame(data=principal_components, columns=[f'PC{i+1}' for i in range(n_components)], index=timestamps)
+        pca_df['returns'] = data["returns"]
 
-        return pca_df
+        return pca_df, data
 
     
-pca_df = data_preparation.prepared_data()
+pca_df, data = data_preparation.prepared_data()
 print(pca_df.head())
+print(data.head())
+
