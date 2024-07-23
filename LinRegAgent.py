@@ -8,7 +8,7 @@ class LinRegAgent(TradingAgent):
         self.model = LinearRegression()
         self.buy_treshold = buy_threshold
         self.sell_treshold = sell_threshold
-        self.retrain_period = 500
+        self.retrain_period = 200
 
     def generate_signals(self, data):
         # Change here
