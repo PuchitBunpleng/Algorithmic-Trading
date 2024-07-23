@@ -59,8 +59,8 @@ class data_preparation():
 
         # Fetch historical data
         data = fetch_historical_data('BTCUSDT', '1d')
+        data_close = data['close']
         data = prepare_data(data)
-
         # Calculate Bollinger Bands
         data = calculate_bollinger_bands(data)
 
@@ -76,15 +76,17 @@ class data_preparation():
         # Calculate CCI with a 20-period window
         data = calculate_cci(data, ndays=20)
 
+        data['close'] = data_close
         # Normalize all features using MinMaxScaler
         scaler = MinMaxScaler()
-        features_to_normalize = ['SMA', 'Upper Band', 'Lower Band', '%B', 'RSI', 'MACD', 'Signal Line', 'MACD Histogram', 'CCI', 'returns']
+        features_to_normalize = ['close', 'SMA', 'Upper Band', 'Lower Band', '%B', 'RSI', 'MACD', 'Signal Line', 'MACD Histogram', 'CCI', 'returns']
         data[features_to_normalize] = scaler.fit_transform(data[features_to_normalize])
         
         # Remove rows with NaN values
         data.dropna(inplace=True)
 
         data = data[features_to_normalize]
+        data_close = data['close']
         # Preserve the timestamp index
         timestamps = data.index
 
@@ -106,10 +108,9 @@ class data_preparation():
         pca_df = pd.DataFrame(data=principal_components, columns=[f'PC{i+1}' for i in range(n_components)], index=timestamps)
         pca_df['returns'] = data["returns"]
 
-        return pca_df, data
+        return pca_df, data 
 
     
 pca_df, data = data_preparation.prepared_data()
 print(pca_df.head())
-print(data.head())
-
+print(data['close'])

@@ -1,0 +1,99 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import requests
+
+def fetch_historical_data(symbol, interval, limit=1000):
+    url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}'
+    response = requests.get(url)
+    data = response.json()
+    df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_asset_volume', 'number_of_trades', 'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+    df.set_index('timestamp', inplace=True)
+    df = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
+    return df
+
+data = fetch_historical_data('BTCUSDT', '1d')
+
+def prepare_data(data):
+    data['returns'] = data['close'].pct_change()
+    data.dropna(inplace=True)
+    return data
+
+data = prepare_data(data)
+prices = data['close'].values
+
+# Define the state space and action space
+states = range(len(prices))
+actions = ['buy', 'sell', 'hold']
+
+# Initialize the Q-table with zeros
+Q = np.zeros((len(states), len(actions)))
+
+# Define parameters
+learning_rate = 0.1
+discount_factor = 0.9
+exploration_prob = 0.3
+num_episodes = 1000
+initial_capital = 100000
+
+# Simulated trading environment
+def simulate_trading_environment(state, action, shares_held, cash):
+    next_state = state + 1 if state < len(prices) - 1 else state
+    reward = 0
+    if action == 'buy' and cash >= prices[state]:
+        shares_bought = cash // prices[state]
+        cash -= shares_bought * prices[state]
+        shares_held += shares_bought
+        reward = 0  # No immediate reward for buying
+    elif action == 'sell' and shares_held > 0:
+        cash += shares_held * prices[state]
+        reward = shares_held * (prices[state] - prices[state - 1])  # Profit from selling
+        shares_held = 0
+    elif action == 'hold':
+        reward = 0  # No immediate reward for holding
+    return next_state, reward, shares_held, cash
+
+# Q-learning algorithm
+for episode in range(num_episodes):
+    state = 0
+    shares_held = 0
+    cash = initial_capital
+    done = False
+    while not done:
+        # Choose an action using the epsilon-greedy policy
+        if np.random.uniform(0, 1) < exploration_prob:
+            action = np.random.choice(actions)
+        else:
+            action = actions[np.argmax(Q[state])]
+
+        # Simulate the trading environment and receive a reward
+        next_state, reward, shares_held, cash = simulate_trading_environment(state, action, shares_held, cash)
+
+        # Update the Q-value using the Q-learning equation
+        best_next_action = np.argmax(Q[next_state])
+        Q[state, actions.index(action)] = Q[state, actions.index(action)] + learning_rate * (reward + discount_factor * Q[next_state, best_next_action] - Q[state, actions.index(action)])
+
+        state = next_state
+        if state == len(prices) - 1:
+            done = True
+
+# Calculate final portfolio value
+final_portfolio_value = cash + shares_held * prices[-1]
+total_profit = final_portfolio_value - initial_capital
+
+# Extract the learned Q-values for trading decisions
+best_actions = [actions[np.argmax(Q[state])] for state in range(len(prices))]
+print("Learned Q-values:", Q)
+print("Best actions:", best_actions)
+print("Total Profit:", total_profit)
+print("Final Portfolio Value:", final_portfolio_value)
+
+# Plot the results
+plt.plot(prices, label='Stock Price')
+buy_signals = [i for i in range(len(best_actions)) if best_actions[i] == 'buy']
+sell_signals = [i for i in range(len(best_actions)) if best_actions[i] == 'sell']
+plt.scatter(buy_signals, prices[buy_signals], marker='^', color='g', label='Buy Signal')
+plt.scatter(sell_signals, prices[sell_signals], marker='v', color='r', label='Sell Signal')
+plt.legend()
+plt.show()

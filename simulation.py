@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 import time
 
-from ExampleAgent import ExampleAgent
 from LstmAgent import LstmAgent
 
 def fetch_historical_data(symbol, interval, limit=1000):
@@ -40,10 +39,10 @@ def backtest(agent, data):
     return agent.get_portfolio_value(row['close'])
 
 # Initialize agents
-agent_1m = LstmAgent('LSTM Agent 1m')
-agent_1h = LstmAgent('LSTM Agent 1h')
-agent_4h = LstmAgent('LSTM Agent 4h')
-agent_1d = LstmAgent('LSTM Agent 1d')
+agent_1m = LstmAgent('Q-learning Agent 1m')
+agent_1h = LstmAgent('Q-learning Agent 1h')
+agent_4h = LstmAgent('Q-learning Agent 4h')
+agent_1d = LstmAgent('Q-learning Agent 1d')
 
 # Backtest each agent
 portfolio_value_1m = backtest(agent_1m, df_1m)
