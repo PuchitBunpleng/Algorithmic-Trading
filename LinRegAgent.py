@@ -3,10 +3,11 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 class LinRegAgent(TradingAgent):
-    def __init__(self, name, treshold=0.01):
+    def __init__(self, name, buy_threshold=0.01, sell_threshold=0.01):
         super().__init__(name)
         self.model = LinearRegression()
-        self.treshold = treshold
+        self.buy_treshold = buy_threshold
+        self.sell_treshold = sell_threshold
         self.retrain_period = 500
 
     def generate_signals(self, data):
@@ -14,9 +15,9 @@ class LinRegAgent(TradingAgent):
         data = data['returns']
         current = data.iloc[-1]
         pred = self.model.predict(np.array(current).reshape(-1, 1))[0]
-        if pred - current > self.treshold:
+        if pred - current > self.buy_treshold:
             return 1
-        elif pred - current < -self.treshold:
+        elif pred - current < -self.sell_treshold:
             return 2
         else:
             return 0

@@ -37,12 +37,19 @@ def backtest(agent, data):
     return agent.get_portfolio_value(row['close'])
 
 # Initialize agents (Change here)
-from ExampleAgent import ExampleAgent
+from CatBoostAgent import CatBoostAgent
 
-agent_1m = ExampleAgent('CatBoost Agent 1m', buy_threshold=0.001, sell_threshold=0.0015)
-agent_1h = ExampleAgent('CatBoost Agent 1h', buy_threshold=0.01, sell_threshold=0.02)
-agent_4h = ExampleAgent('CatBoost Agent 4h', buy_threshold=0.012, sell_threshold=0.03)
-agent_1d = ExampleAgent('CatBoost Agent 1d', buy_threshold=0.05, sell_threshold=0.06)
+# Price
+agent_1m = CatBoostAgent('CatBoost Agent 1m')
+agent_1h = CatBoostAgent('CatBoost Agent 1h')
+agent_4h = CatBoostAgent('CatBoost Agent 4h')
+agent_1d = CatBoostAgent('CatBoost Agent 1d')
+
+# Return
+# agent_1m = CatBoostAgent('CatBoost Agent 1m', buy_threshold=0.001, sell_threshold=0.001)
+# agent_1h = CatBoostAgent('CatBoost Agent 1h', buy_threshold=0.01, sell_threshold=0.02)
+# agent_4h = CatBoostAgent('CatBoost Agent 4h', buy_threshold=0.01, sell_threshold=0.02)
+# agent_1d = CatBoostAgent('CatBoost Agent 1d', buy_threshold=0.05, sell_threshold=0.06)
 
 # Backtest each agent
 portfolio_value_1m = backtest(agent_1m, df_1m)

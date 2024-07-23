@@ -2,8 +2,8 @@ from TradingAgent import TradingAgent
 import numpy as np
 from catboost import Pool, CatBoostRegressor
 
-class ExampleAgent(TradingAgent):
-    def __init__(self, name, buy_threshold=0.01, sell_threshold=0.01):
+class CatBoostAgent(TradingAgent):
+    def __init__(self, name, buy_threshold=0, sell_threshold=0):
         """
         Initializes the ExampleAgent instance with a given name.
         
@@ -14,8 +14,8 @@ class ExampleAgent(TradingAgent):
         self.model = CatBoostRegressor()
         self.buy_treshold = buy_threshold
         self.sell_treshold = sell_threshold
-        self.retrain_period = 500
-        self.window_size = 1
+        self.retrain_period = 400
+        self.window_size = 5
 
     def generate_signals(self, data):
         """
@@ -27,9 +27,9 @@ class ExampleAgent(TradingAgent):
         Returns:
             int: The signal indicating whether to Hold, Buy, or Sell (0: Hold, 1: Buy, 2: Sell).
         """
-        current = data['returns'].iloc[-1]
-        features = self.extract_feature(data)
-        pred = self.model.predict(np.array(features).reshape(-1, self.window_size))[0]
+        current = data['close'].iloc[-1]
+        input = self.extract_feature(data)[-1]
+        pred = self.model.predict(np.array(input).reshape(-1, self.window_size))[0]
         if pred - current > self.buy_treshold:
             return 1
         elif pred - current < -self.sell_treshold:
@@ -44,7 +44,7 @@ class ExampleAgent(TradingAgent):
         Parameters:
             data (DataFrame): The input data containing the prices or returns.
         """
-        data = data['returns']
+        data = data['close']
         train_data, train_label = self.prepare_data(data)
         train_pool = Pool(train_data, train_label)
         self.model.fit(train_pool, verbose=False)
@@ -79,7 +79,7 @@ class ExampleAgent(TradingAgent):
         features = []
         for i in range(len(data) - self.window_size):
             features.append(data[i:i+self.window_size])
-        return features
+        return np.array(features)
 
     def trade(self, data):
         """
