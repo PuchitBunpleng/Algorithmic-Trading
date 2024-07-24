@@ -38,6 +38,8 @@ def backtest(agent, data):
         agent.trade(data.loc[:timestamp])
     return agent.get_portfolio_value(row['close'])
 
+from LinRegAgent import LinRegAgent
+
 # Initialize agents
 agent_1m = QLearningAgent('Q-learning Agent 1m')
 agent_1h = QLearningAgent('Q-learning Agent 1h')
