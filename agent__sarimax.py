@@ -8,7 +8,6 @@ class SARIMAXAgent:
         self.order = order
         self.seasonal_order = seasonal_order
         self.model = None
-        self.results = None
 
     def train_model(self, data, exog_data):
         exog_data = exog_data.reindex(data.index).ffill().bfill()
