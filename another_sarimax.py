@@ -44,10 +44,11 @@ def backtest(agent, data, exog_data):
 
 # Example usage
 if __name__ == "__main__":
-    # Replace 'path_to_your_data.csv' and 'path_to_your_exog_data.csv' with the actual file paths
-    df_1h = pd.read_csv('/path/to/your/data.csv', parse_dates=['timestamp'], index_col='timestamp')
-    exog_data = pd.read_csv('/path/to/your/exog_data.csv', parse_dates=['timestamp'], index_col='timestamp')
+    # Replace '/path/to/your/data.csv' and '/path/to/your/exog_data.csv' with the actual file paths
+    df_1h = pd.read_csv('/Users/proudpcy/Documents/GitHub/Algorithmic-Trading/your_data.csv', parse_dates=['timestamp'], index_col='timestamp')
+    exog_data = pd.read_csv('/Users/proudpcy/Documents/GitHub/Algorithmic-Trading/your_exog_data.csv', parse_dates=['timestamp'], index_col='timestamp')
 
     agent_1h = SARIMAXAgent(order=(1, 1, 1), seasonal_order=(1, 1, 1, 24))
     portfolio_value_1h = backtest(agent_1h, df_1h, exog_data)
     print(portfolio_value_1h)
+
