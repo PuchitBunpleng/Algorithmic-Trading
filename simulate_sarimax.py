@@ -39,10 +39,10 @@ def backtest(agent, data):
 # Initialize agents (Change here)
 from another_sarimax import SARIMAXAgent
 
-agent_1m = ExampleAgent('CatBoost Agent 1m', buy_threshold=0.001, sell_threshold=0.0015)
-agent_1h = ExampleAgent('CatBoost Agent 1h', buy_threshold=0.01, sell_threshold=0.02)
-agent_4h = ExampleAgent('CatBoost Agent 4h', buy_threshold=0.012, sell_threshold=0.03)
-agent_1d = ExampleAgent('CatBoost Agent 1d', buy_threshold=0.05, sell_threshold=0.06)
+agent_1m = SARIMAXAgent('CatBoost Agent 1m', buy_threshold=0.001, sell_threshold=0.0015)
+agent_1h = SARIMAXAgent('CatBoost Agent 1h', buy_threshold=0.01, sell_threshold=0.02)
+agent_4h = SARIMAXAgent('CatBoost Agent 4h', buy_threshold=0.012, sell_threshold=0.03)
+agent_1d = SARIMAXAgent('CatBoost Agent 1d', buy_threshold=0.05, sell_threshold=0.06)
 
 # Backtest each agent
 portfolio_value_1m = backtest(agent_1m, df_1m)
