@@ -1,18 +1,19 @@
 from TradingAgent import TradingAgent
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 import keras
 
 class LstmAgent(TradingAgent):
     def __init__(self, name):
         super().__init__(name)
-        self.window_size = 5
+        self.window_size = 1
         self.retrain_period = 500
         self.model = self.build_model()
-        self.scaler = MinMaxScaler(feature_range=(0, 1))
+        self.X_scaler = StandardScaler()
+        self.y_scaler = StandardScaler()
 
     def build_model(self):
-        model = keras.models.Sequential()
+        model = keras.Sequential()
         model.add(keras.layers.InputLayer((self.window_size, 1)))
         model.add(keras.layers.LSTM(128, return_sequences=True))
         model.add(keras.layers.Dropout(0.2))
@@ -24,38 +25,38 @@ class LstmAgent(TradingAgent):
         return model
 
     def prepare_data(self, data):
-        data = data['returns']
-        data = self.scaler.fit_transform(data.values.reshape(-1, 1))
-        X, y = self.df_to_X_y(data, self.window_size)
-        return X, y
-
-    def df_to_X_y(self, df, window_size):
+        
         X = []
         y = []
-        for i in range(len(df) - window_size):
-            row = df[i:i + window_size]
+        window_size = self.window_size
+        for i in range(len(data)-window_size):
+            row = data[i:i+window_size]
             X.append(row)
-            label = df[i + window_size]
+            label = data[i+window_size]
             y.append(label)
         return np.array(X), np.array(y)
 
+
     def train_model(self, data):
-        X, y = self.prepare_data(data)
-        split= int(len(X) * 0.9)
+        X, y = self.prepare_data(data['returns'])
+        X = self.X_scaler.fit_transform(X)
+        y = y.reshape(-1, 1)
+        print(y)
+        self.y_scaler = self.y_scaler.fit(y)
+        y = self.y_scaler.transform(y)
 
-        X_train, y_train = X[:split], y[:split]
-        X_val, y_val = X[split:], y[split:]
 
-        cp = keras.callbacks.ModelCheckpoint('lstm_model.keras', save_best_only=True)
-        self.model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[cp])
-        self.model = keras.models.load_model('lstm_model.keras')
+        self.model.fit(X, y, epochs=20)
 
 
     def generate_signals(self, data):
-        features = self.extract_feature(data)
-        features = self.scaler.transform(features)
-        pred = self.model.predict(np.array(features).reshape(-1, self.window_size, 1))[0, 0]
+
         current = data['returns'].iloc[-1]
+        features = self.extract_feature(data['returns'])
+        features = self.X_scaler.fit_transform(features)
+        pred = self.model.predict(np.array(current).reshape(-1, 1), verbose=0)
+        pred = self.y_scaler.inverse_transform(pred)[0,0]
+        print(pred)
         if pred > current:
             return 1
         elif pred < current:
@@ -65,7 +66,6 @@ class LstmAgent(TradingAgent):
 
     def extract_feature(self, data):
         features = []
-        data = self.scaler.transform(data['returns'].values.reshape(-1, 1))
         for i in range(len(data) - self.window_size):
             features.append(data[i:i + self.window_size])
         return features

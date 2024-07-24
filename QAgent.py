@@ -22,17 +22,20 @@ class QLearningAgent(TradingAgent):
         self.actions = ['buy', 'sell', 'hold']
         self.Q = None
 
-    def generate_signals(self, data):
+    def generate_signals(self, data, num_bins=10):
         """
         Generates trading signals based on the Q-table.
 
         Parameters:
-            data (DataFrame): The input data containing the prices or returns.
+        data (DataFrame): The input data containing the prices or returns.
+        num_bins (int): The number of bins to use for discretizing the prices.
 
         Returns:
-            int: The signal indicating whether to Hold, Buy, or Sell (0: Hold, 1: Buy, 2: Sell).
+        int: The signal indicating whether to Hold, Buy, or Sell (0: Hold, 1: Buy, 2: Sell).
         """
-        state = len(data) - 1
+        prices = data['close'].values
+        binned_prices = self.bin_prices(prices, num_bins)
+        state = binned_prices[-1]
         action = self.actions[np.argmax(self.Q[state])]
         print(action)
         if action == 'buy':
@@ -42,36 +45,42 @@ class QLearningAgent(TradingAgent):
         else:
             return 0
 
-    def train_model(self, data):
+
+    def train_model(self, data, num_bins=10):
         """
-        Trains the Q-learning model using the provided data.
+        Trains the Q-learning model using the provided data with frequency-based binning.
 
         Parameters:
-            data (DataFrame): The input data containing the prices or returns.
+        data (DataFrame): The input data containing the prices or returns.
+        num_bins (int): The number of bins to use for discretizing the prices.
         """
         prices = data['close'].values
-        states = range(len(prices))
-        self.Q = np.zeros((len(states), len(self.actions)))
-        print("price is loaded and Q-table is initiated")
+        binned_prices = self.bin_prices(prices, num_bins)
+        states = range(len(binned_prices))
+        self.Q = np.zeros((num_bins, len(self.actions)))  # Use num_bins instead of len(states)
+
+
         for episode in range(self.num_episodes):
-            state = 0
+            state = binned_prices[0]
             shares_held = 0
             cash = self.cash
             done = False
+
             while not done:
                 if np.random.uniform(0, 1) < self.exploration_prob:
                     action = np.random.choice(self.actions)
                 else:
                     action = self.actions[np.argmax(self.Q[state])]
 
-                next_state, reward, shares_held, cash = self.simulate_trading_environment(state, action, shares_held, cash, prices)
+                next_state, reward, shares_held, cash = self.simulate_trading_environment(state, action, shares_held, cash, binned_prices)
 
                 best_next_action = np.argmax(self.Q[next_state])
                 self.Q[state, self.actions.index(action)] = self.Q[state, self.actions.index(action)] + self.learning_rate * (reward + self.discount_factor * self.Q[next_state, best_next_action] - self.Q[state, self.actions.index(action)])
 
                 state = next_state
-                if state == len(prices) - 1:
+                if state == len(binned_prices) - 1:
                     done = True
+
 
     def prepare_data(self, data):
         """
@@ -128,33 +137,53 @@ class QLearningAgent(TradingAgent):
         else:
             print(f"{timestamp}: {self.name} - Hold")
 
-    def simulate_trading_environment(self, state, action, shares_held, cash, prices):
+    def simulate_trading_environment(self, state, action, shares_held, cash, binned_prices):
         """
         Simulates the trading environment and returns the next state, reward, shares held, and cash.
 
         Parameters:
-            state (int): The current state.
-            action (str): The action to take ('buy', 'sell', 'hold').
-            shares_held (int): The number of shares held.
-            cash (float): The amount of cash available.
-            prices (array): The array of prices.
+        state (int): The current state.
+        action (str): The action to take ('buy', 'sell', 'hold').
+        shares_held (int): The number of shares held.
+        cash (float): The amount of cash available.
+        binned_prices (array): The array of binned prices.
 
         Returns:
-            tuple: The next state, reward, shares held, and cash.
+        tuple: The next state, reward, shares held, and cash.
         """
-        next_state = state + 1 if state < len(prices) - 1 else state
+        next_state = state + 1 if state < len(binned_prices) - 1 else state
         reward = 0
-        if action == 'buy' and cash >= prices[state]:
-            shares_bought = cash // prices[state]
-            cash -= shares_bought * prices[state]
+        price = binned_prices[state]
+        next_price = binned_prices[next_state]
+
+        if action == 'buy' and cash >= price:
+            shares_bought = cash // price
+            cash -= shares_bought * price
             shares_held += shares_bought
             reward = 0  # No immediate reward for buying
         elif action == 'sell' and shares_held > 0:
-            cash += shares_held * prices[state]
-            reward = shares_held * (prices[state] - prices[state - 1])  # Profit from selling
+            cash += shares_held * price
+            reward = shares_held * (next_price - price)  # Profit from selling
             shares_held = 0
         elif action == 'hold':
             reward = 0  # No immediate reward for holding
+
         return next_state, reward, shares_held, cash
+
+
+
+    def bin_prices(self, prices, num_bins):
+        """
+        Bin the prices into discrete bins using frequency-based binning.
+
+        Parameters:
+        prices (array-like): The array of prices.
+        num_bins (int): The number of bins to use.
+
+        Returns:
+            array: The binned prices.
+        """
+        bins = pd.qcut(prices, num_bins, labels=False)
+        return bins
 
 

@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import time
 
-from LstmAgent import LstmAgent
+from QAgent import QLearningAgent
 
 def fetch_historical_data(symbol, interval, limit=1000):
     url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}'
@@ -39,10 +39,10 @@ def backtest(agent, data):
     return agent.get_portfolio_value(row['close'])
 
 # Initialize agents
-agent_1m = LstmAgent('Q-learning Agent 1m')
-agent_1h = LstmAgent('Q-learning Agent 1h')
-agent_4h = LstmAgent('Q-learning Agent 4h')
-agent_1d = LstmAgent('Q-learning Agent 1d')
+agent_1m = QLearningAgent('Q-learning Agent 1m')
+agent_1h = QLearningAgent('Q-learning Agent 1h')
+agent_4h = QLearningAgent('Q-learning Agent 4h')
+agent_1d = QLearningAgent('Q-learning Agent 1d')
 
 # Backtest each agent
 portfolio_value_1m = backtest(agent_1m, df_1m)

@@ -4,6 +4,7 @@ import requests
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 
 def fetch_historical_data(symbol, interval, limit=1000):
@@ -24,11 +25,11 @@ def prepare_data(data):
     return data
 
 data = prepare_data(data)
-data = data['returns']
+original_data = data['returns']
 
 # Normalize the close price data
-scaler = MinMaxScaler(feature_range=(0, 1))
-data = scaler.fit_transform(data.values.reshape(-1, 1))
+scaler = MinMaxScaler()
+data = scaler.fit_transform(original_data.values.reshape(-1, 1))
 
 
 def df_to_X_y(df, window_size=5):
@@ -42,7 +43,7 @@ def df_to_X_y(df, window_size=5):
     return np.array(X), np.array(y)
 
 # Prepare the data for LSTM
-window_size = 5
+window_size = 1
 X, y = df_to_X_y(data, window_size)
 print(X.shape, y.shape)
 
@@ -84,32 +85,29 @@ model3.add(keras.layers.Dense(1, activation='linear'))"""
 
 model2.summary()
 
-cp2 = keras.callbacks.ModelCheckpoint('model2/.keras', save_best_only=True)
 model2.compile(loss=keras.losses.MeanSquaredError(), optimizer=keras.optimizers.Adam(learning_rate=0.0001), metrics=[keras.metrics.RootMeanSquaredError()])
 
 # Train the model
-history = model2.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[cp2])
+history = model2.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20)
 
-# Load the best model
-model3 = keras.models.load_model('model2/.keras')
 
 # Predictions and plotting
 def plot_predictions(data, title):
-    plt.plot(data['Predictions'], label='Predictions')
     plt.plot(data['Actuals'], label='Actuals')
+    plt.plot(data['Predictions'], label='Predictions')
     plt.title(title)
     plt.legend()
     plt.show()
 
-train_predictions = model3.predict(X_train).flatten()
+train_predictions = model2.predict(X_train).flatten()
 train_results = pd.DataFrame(data={'Predictions': train_predictions, 'Actuals': y_train.flatten()})
 plot_predictions(train_results, 'Train Predictions vs Actuals')
 
-val_predictions = model3.predict(X_val).flatten()
+val_predictions = model2.predict(X_val).flatten()
 val_results = pd.DataFrame(data={'Predictions': val_predictions, 'Actuals': y_val.flatten()})
 plot_predictions(val_results, 'Validation Predictions vs Actuals')
 
-test_predictions = model3.predict(X_test).flatten()
+test_predictions = model2.predict(X_test).flatten()
 test_results = pd.DataFrame(data={'Predictions': test_predictions, 'Actuals': y_test.flatten()})
 plot_predictions(test_results, 'Test Predictions vs Actuals')
 
@@ -170,7 +168,7 @@ print(X_test.shape, y_test.shape)
 
 model2 = keras.models.Sequential()
 model2.add(keras.layers.InputLayer((window_size, 1)))
-model2.add(keras.layers.LSTM(128, return_sequences=True))
+model2.add(keras.layers.LSTM(128))
 model2.add(keras.layers.Dropout(0.2))
 model2.add(keras.layers.LSTM(64))
 model2.add(keras.layers.Dropout(0.2))
@@ -201,17 +199,18 @@ model2.compile(loss=keras.losses.MeanSquaredError(), optimizer=keras.optimizers.
 history = model2.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=20, callbacks=[cp2])
 
 # Load the best model
-model3 = keras.models.load_model('model2/.keras')
+model2 = keras.models.load_model('model2/.keras')
 
 # Predictions and plotting
 def plot_predictions(data, title):
-    plt.plot(data['Predictions'], label='Predictions')
+    
     plt.plot(data['Actuals'], label='Actuals')
+    plt.plot(data['Predictions'], label='Predictions')
     plt.title(title)
     plt.legend()
     plt.show()
 
-train_predictions = model3.predict(X_train).flatten()
+train_predictions = model2.predict(X_train).flatten()
 train_results = pd.DataFrame(data={'Predictions': train_predictions, 'Actuals': y_train.flatten()})
 plot_predictions(train_results, 'Train Predictions vs Actuals')
 
