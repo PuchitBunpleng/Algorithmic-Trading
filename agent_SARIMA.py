@@ -2,7 +2,7 @@ import pandas as pd
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from DummyAgent import TradingAgent  # Assuming you have a base TradingAgent class
 
-class SARIMAgent(TradingAgent):
+class SARIMAAgent(TradingAgent):
     def __init__(self, name, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12), buy_threshold=0, sell_threshold=0):
         super().__init__(name)
         self.order = order
